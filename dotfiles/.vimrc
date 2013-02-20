@@ -9,16 +9,19 @@ Bundle 'gmarik/vundle'
 Bundle 'aliva/vim-fish'
 Bundle 'altercation/vim-colors-solarized'
 Bundle 'godlygeek/tabular'
+Bundle 'groenewege/vim-less'
 Bundle 'kien/ctrlp.vim'
 Bundle 'Lokaltog/vim-powerline'
-Bundle 'mirell/vim-matchit'
+Bundle 'tsaleh/vim-matchit'
+Bundle 'scriptin/scala.vim'
 Bundle 'scrooloose/nerdcommenter'
+Bundle 'scrooloose/nerdtree'
 Bundle 'scrooloose/syntastic'
 Bundle 'skalnik/vim-vroom'
 Bundle 'tpope/vim-bundler'
+Bundle 'tpope/vim-endwise'
 Bundle 'tpope/vim-fugitive'
 Bundle 'vim-scripts/AutoTag'
-Bundle 'vim-scripts/YankRing.vim'
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " EDITOR CONFIGURATION
@@ -38,11 +41,11 @@ set t_ti= t_te=
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " BASIC EDITING CONFIGURATION
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" allow backspacing over everything in insert mode
+" Allow backspacing over everything in insert mode
 set backspace=indent,eol,start
-" allow unsaved background buffers and remember marks/undo for them
+" Allow unsaved background buffers and remember marks/undo for them
 set hidden
-" remember more commands and search history
+" Remember more commands and search history
 set history=10000
 " Use already open buffer
 set switchbuf=useopen
@@ -58,11 +61,13 @@ syntax enable
 set title
 " Display incomplete commands
 set showcmd
+" Highlight current line
+set cursorline
 " Show line numbers
 set number
 " Minimal window width
 set winwidth=79
-" keep more context when scrolling off the end of a buffer (3 lines)
+" Keep more context when scrolling off the end of a buffer (3 lines)
 set scrolloff=3
 " Height of the command bar
 set cmdheight=2
@@ -70,12 +75,12 @@ set cmdheight=2
 set splitbelow
 " When on, splitting a window will put the new window right of the current one
 set splitright
-" Show line numbers
-set number
 " Line number left margin
 set numberwidth=5
-" always show the status bar
+" Always show the status bar
 set laststatus=2
+" Fix vim auto-complete slowness in large projects
+set foldmethod=manual
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " COLOR
@@ -85,7 +90,7 @@ set t_Co=256
 " Background color
 set background=dark
 " Theme
-colorscheme koehler
+colorscheme solarized
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " SEARCH CONFIGURATION
@@ -108,7 +113,7 @@ set backup
 set backupdir=~/.vim/tmp/backup//
 " Swap files
 set directory=~/.vim/tmp/swap//
-" It's 20120, Vim.
+" It's 2012, Vim.
 set noswapfile
 " Make vim able to edit crontab files again.
 set backupskip=/tmp/*,/private/tmp/*"
@@ -153,27 +158,23 @@ set wildignore+=*.aux,*.out,*.toc                " LaTeX intermediate files
 set wildignore+=*.jpg,*.bmp,*.gif,*.png,*.jpeg   " binary images
 set wildignore+=*.sw?                            " Vim swap files
 set wildignore+=*.DS_Store                       " OSX bullshit
+set wildignore+=*/cassettes/**/*.yml
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " LIST
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Show invisible characters
- set list
+set list
 " Reset the listchars
- set listchars=""
-" a tab should display as "  ", trailing whitespace as "."
- set listchars=tab:\ \
-" show trailing spaces as dots
- set listchars+=trail:.
+set listchars=""
+" A tab should display as "  ", trailing whitespace as "."
+set listchars=tab:\ \
+" Show trailing spaces as dots
+set listchars+=trail:.
 " The character to show in the last column when wrap is off and the line continues beyond the right of the screen
- set listchars+=extends:>
+set listchars+=extends:>
 " The character to show in the last column when wrap is off and the line continues beyond the right of the screen
- set listchars+=precedes:<
-
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" STATUS LINE
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-:set statusline=%<%f\ (%{&ft})\ %-4(%m%)%=%-19(%3l,%02c%03V%)
+set listchars+=precedes:<
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " CONVENIENCE MAPPINGS
@@ -183,7 +184,7 @@ let mapleader=","
 " Aliasing the new leader ',' to the default one '\'
 nmap \ ,
 
-"Better ESC
+" Better ESC
 inoremap jk <Esc>
 
 " Use sane regexes.
@@ -209,9 +210,11 @@ nnoremap <leader><leader> <c-^>
 nnoremap <leader>w mz:%s/\s\+$//<cr>:let @/=''<cr>`z
 
 " System clipboard interaction
-" From https://github.com/henrik/dotfiles/blob/master/vim/config/mappings.vim
-noremap <leader>Y "*y
-noremap <leader>P :set paste<CR>"*p<CR>:set nopaste<CR>
+nnoremap <leader>Y :.!pbcopy<CR>uk<CR>
+vnoremap <leader>Y :!pbcopy<CR>uk<CR>
+
+"NERDTree Remap
+noremap <leader>p :NERDTree<CR>
 
 " Select (charwise) the contents of the current line, excluding indentation.
 nnoremap vv ^vg_
@@ -229,11 +232,18 @@ noremap k gk
 noremap gj j
 noremap gk k
 
+"Mappings for vimrc file
+cnoremap ev e $MYVIMRC<jr>
+cnoremap sv source $MYVIMRC<cr>
+
 " Find merge conflict markers
 nmap <silent> <leader>cf <ESC>/\v^[<=>]{7}( .*\|$)<CR>
 
 " Shorcut for setting a pry breakpoint
 iab xpry require 'pry'; binding.pry
+
+" Convert ruby 1.8 hash into ruby 1.9
+nnoremap <leader>h :%s/:\([^ ]*\)\(\s*\)=>/\1:/g<CR>
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " EXTRA
@@ -255,31 +265,26 @@ command! -bang WA wa<bang>
 command! -bang Wq wq<bang>
 command! -bang WQ wq<bang>
 
-" Edit .vimrc file
-nnoremap <leader>EV :vsplit $MYVIMRC<cr>
-" Reload .vimrc file
-nnoremap <leader>RV :source $MYVIMRC<cr>
 " Edit .zshrc file
 nnoremap <leader>EZ :vsplit ~/.zshrc<cr>
+" Edit fish config file
+nnoremap <leader>EF :vsplit ~/.config/fish/config.fish<cr>
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " MULTIPURPOSE TAB KEY
 " Indent if we're at the beginning of a line. Else, do completion.
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 function! InsertTabWrapper()
-    let col = col('.') - 1
-    if !col || getline('.')[col - 1] !~ '\k'
-        return "\<tab>"
-    else
-        return "\<c-p>"
-    endif
+  let col = col('.') - 1
+  if !col || getline('.')[col - 1] !~ '\k'
+    return "\<tab>"
+  else
+    return "\<c-p>"
+  endif
 endfunction
 inoremap <tab> <c-r>=InsertTabWrapper()<cr>
 inoremap <s-tab> <c-n>
 
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" ARROW KEYS ARE UNACCEPTABLE
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " OPEN FILES IN DIRECTORY OF CURRENT FILE
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -291,13 +296,13 @@ map <leader>v :view %%
 " RENAME CURRENT FILE
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 function! RenameFile()
-    let old_name = expand('%')
-    let new_name = input('New file name: ', expand('%'), 'file')
-    if new_name != '' && new_name != old_name
-        exec ':saveas ' . new_name
-        exec ':silent !rm ' . old_name
-        redraw!
-    endif
+  let old_name = expand('%')
+  let new_name = input('New file name: ', expand('%'), 'file')
+  if new_name != '' && new_name != old_name
+    exec ':saveas ' . new_name
+    exec ':silent !rm ' . old_name
+    redraw!
+  endif
 endfunction
 map <leader>n :call RenameFile()<cr>
 
@@ -312,7 +317,6 @@ function! PromoteToLet()
   :normal ==
 endfunction
 :command! PromoteToLet :call PromoteToLet()
-:map <leader>p :PromoteToLet<cr>
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " SWITCH BETWEEN TEST AND PRODUCTION CODE
@@ -326,7 +330,8 @@ function! AlternateForCurrentFile()
   let new_file = current_file
   let in_spec = match(current_file, '^spec/') != -1
   let going_to_spec = !in_spec
-  let in_app = match(current_file, '\<controllers\>') != -1 || match(current_file, '\<models\>') != -1 || match(current_file, '\<views\>') != -1
+  let in_app = match(current_file, '\<controllers\>') != -1 || match(current_file, '\<models\>') != -1 || match(current_file, '\<views\>') != -1 || match(current_file, '\<helpers\>') != -1
+
   if going_to_spec
     if in_app
       let new_file = substitute(new_file, '^app/', '', '')
@@ -402,11 +407,11 @@ augroup END
 
 " Trailing whitespace change on insert mode
 augroup trailing
-    au!
-    au InsertEnter * :set listchars-=trail:.
-    au InsertEnter * :set listchars+=trail:⌴
-    au InsertLeave * :set listchars+=trail:.
-    au InsertLeave * :set listchars-=trail:⌴
+  au!
+  au InsertEnter * :set listchars-=trail:.
+  au InsertEnter * :set listchars+=trail:⌴
+  au InsertLeave * :set listchars+=trail:.
+  au InsertLeave * :set listchars-=trail:⌴
 augroup END
 
 " Save when losing focus
@@ -415,17 +420,20 @@ au FocusLost * :silent! wall
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " PLUGINS
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" CtrlP Menu remapping
 noremap <C-t> :CtrlP<CR>
 inoremap <C-t> <ESC>:CtrlP<CR>
 
-map  <D-/> <plug>NERDCommenterToggle<CR>
-imap <D-/> <Esc><plug>NERDCommenterToggle<CR>i
-
+" NerdCommenter Menu remapping
 map  <leader>/ <plug>NERDCommenterToggle<CR>
 imap <leader>/ <Esc><plug>NERDCommenterToggle<CR>i
 
-nmap Y :YRShow<cr>
+" Use custom icons and arrows for symbols and dividers
+let g:Powerline_symbols = 'fancy'
 
-set background=light
-set background=dark
-
+" Jump cursor to the first detected error when saving
+let g:syntastic_auto_jump = 1
+" Symbol when have errors
+let g:syntastic_error_symbol = '✗'
+" Symbol when have warnings
+let g:syntastic_warning_symbol = '⚠'
