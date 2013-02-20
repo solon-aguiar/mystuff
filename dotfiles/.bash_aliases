@@ -1,4 +1,8 @@
 alias bs='bundle exec spinach'
 alias mygit='cd ~/Documents/mystuff/'
 alias copy_dot_files='cp ~/.vimrc ~/Documents/mystuff/dotfiles/ && cp ~/.bash_aliases ~/Documents/mystuff/dotfiles/ && cp ~/.gitconfig ~/Documents/mystuff/dotfiles/'
-
+alias l='ls -F'
+alias ll='ls -lhtr'
+alias lll='ls -ltahr'
+alias g='git'
+alias vim='mvim'
